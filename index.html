@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Dashboard — João</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0f0f10;--surface:#1a1a1d;--surface2:#242428;--surface3:#2e2e33;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#f0efe8;--muted:#888780;--hint:#454540;
+  --green-light:#2dc490;--green-bg:#071f16;
+  --red-light:#e05c4a;--red-bg:#1f0907;
+  --blue-light:#6aadee;--blue-bg:#071526;
+  --purple-light:#a49fe8;--purple-bg:#100f26;
+  --amber-light:#e09030;--amber-bg:#1f1505;
+  --pink-light:#e87da8;--pink-bg:#1f0713;
+  --radius:16px;--radius-sm:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);max-width:480px;margin:0 auto;}
+.header{padding:24px 16px 10px;display:flex;align-items:flex-start;justify-content:space-between;}
+.header h1{font-size:24px;font-weight:600;letter-spacing:-0.6px;}
+.header p{font-size:13px;color:var(--muted);margin-top:3px;}
+.sync-btn{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:6px 12px;cursor:pointer;font-size:12px;font-weight:500;color:var(--muted);font-family:'DM Sans',sans-serif;transition:all 0.2s;white-space:nowrap;}
+.sync-btn:hover{border-color:var(--border2);color:var(--text);}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--hint);flex-shrink:0;}
+.sync-dot.ok{background:var(--green-light);}
+.sync-dot.loading{background:var(--amber-light);}
+.sync-dot.error{background:var(--red-light);}
+.nav{position:sticky;top:0;z-index:100;background:rgba(15,15,16,0.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;scrollbar-width:none;padding:0 8px;}
+.nav::-webkit-scrollbar{display:none;}
+.nav-btn{flex-shrink:0;padding:13px 14px;font-size:13px;font-weight:500;color:var(--muted);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+.nav-btn.active{color:var(--text);border-bottom-color:var(--text);}
+.page{display:none;padding:16px 16px 100px;}
+.page.active{display:block;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;}
+.card-title{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px;}
+.mg2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.mg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
+.metric{background:var(--surface2);border-radius:var(--radius-sm);padding:14px 12px;}
+.metric-label{font-size:11px;color:var(--muted);margin-bottom:5px;}
+.metric-value{font-size:21px;font-weight:600;font-family:'DM Mono',monospace;letter-spacing:-0.5px;}
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;margin-right:3px;}
+.t-estudo{background:var(--purple-bg);color:var(--purple-light);}
+.t-trabalho{background:var(--blue-bg);color:var(--blue-light);}
+.t-saude{background:var(--green-bg);color:var(--green-light);}
+.t-pessoal{background:var(--pink-bg);color:var(--pink-light);}
+.t-transporte{background:var(--blue-bg);color:var(--blue-light);}
+.t-alimentacao{background:var(--amber-bg);color:var(--amber-light);}
+.t-ganhos{background:var(--green-bg);color:var(--green-light);}
+.t-lazer{background:var(--amber-bg);color:var(--amber-light);}
+.t-educacao{background:var(--purple-bg);color:var(--purple-light);}
+.t-outros{background:var(--surface3);color:var(--muted);}
+.t-receita{background:var(--green-bg);color:var(--green-light);}
+.t-despesa{background:var(--red-bg);color:var(--red-light);}
+.t-pendente{background:#1a1405;color:#c49a30;}
+.task-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.task-row:last-child{border-bottom:none;padding-bottom:0;}
+.task-row:first-child{padding-top:0;}
+.cb{width:18px;height:18px;border:1.5px solid var(--hint);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s;margin-top:1px;}
+.cb.done{background:#1D9E75;border-color:#1D9E75;}
+.task-txt{font-size:14px;line-height:1.45;flex:1;}
+.task-txt.done{color:var(--hint);text-decoration:line-through;}
+.del-btn{color:var(--hint);cursor:pointer;font-size:18px;line-height:1;padding:0 2px;flex-shrink:0;}
+.gasto-row{display:flex;align-items:flex-start;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);gap:10px;}
+.gasto-row:last-child{border-bottom:none;padding-bottom:0;}
+.gasto-row:first-child{padding-top:0;}
+.gasto-desc{font-size:14px;margin-bottom:5px;}
+.gasto-val{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;white-space:nowrap;}
+.pos{color:var(--green-light);}
+.neg{color:var(--red-light);}
+.meta-item{padding:12px 0;border-bottom:1px solid var(--border);}
+.meta-item:last-child{border-bottom:none;padding-bottom:0;}
+.meta-item:first-child{padding-top:0;}
+.meta-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px;}
+.meta-desc{font-size:13px;line-height:1.4;flex:1;}
+.meta-pct{font-family:'DM Mono',monospace;font-size:13px;color:var(--muted);white-space:nowrap;}
+.prog-bg{height:5px;background:var(--surface3);border-radius:3px;overflow:hidden;margin-bottom:6px;}
+.prog-fill{height:100%;border-radius:3px;transition:width 0.3s;}
+input[type=range]{width:100%;accent-color:#7F77DD;background:none;border:none;padding:0;height:20px;}
+.irow{display:flex;gap:8px;margin-bottom:8px;}
+input:not([type=range]),select{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px;color:var(--text);font-family:'DM Sans',sans-serif;width:100%;outline:none;}
+select option{background:var(--surface2);}
+.btn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 16px;font-size:14px;font-weight:500;color:var(--text);cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+.btn-full{width:100%;margin-top:4px;padding:12px;}
+.dist-row{margin-bottom:10px;}
+.dist-row:last-child{margin-bottom:0;}
+.dist-header{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;}
+.dist-val{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);}
+.empty{color:var(--hint);font-size:13px;text-align:center;padding:20px 0;}
+.loading-bar{height:2px;background:linear-gradient(90deg,var(--purple-bg),var(--purple-light),var(--purple-bg));background-size:200%;animation:shimmer 1.5s infinite;border-radius:1px;margin-bottom:12px;display:none;}
+.loading-bar.active{display:block;}
+@keyframes shimmer{0%{background-position:200%}100%{background-position:-200%}}
+.last-sync{font-size:11px;color:var(--hint);text-align:center;margin-bottom:12px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Boa tarde, João</h1>
+    <p id="header-date"></p>
+  </div>
+  <button class="sync-btn" onclick="syncNotion()" id="sync-btn">
+    <div class="sync-dot" id="sync-dot"></div>
+    <span id="sync-txt">Sincronizar</span>
+  </button>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="showPage('hoje',this)">Hoje</button>
+  <button class="nav-btn" onclick="showPage('gastos',this)">Gastos</button>
+  <button class="nav-btn" onclick="showPage('metas',this)">Metas</button>
+  <button class="nav-btn" onclick="showPage('resumo',this)">Resumo</button>
+</nav>
+
+<!-- HOJE -->
+<div id="page-hoje" class="page active">
+  <div class="loading-bar" id="loading-hoje"></div>
+  <div class="mg2">
+    <div class="metric"><div class="metric-label">Tarefas hoje</div><div class="metric-value" id="m-tarefas">—</div></div>
+    <div class="metric"><div class="metric-label">Hábitos</div><div class="metric-value" id="m-habitos">—</div></div>
+  </div>
+  <div class="card"><div class="card-title">Top 3 do dia</div><div id="list-top3"></div></div>
+  <div class="card"><div class="card-title">Hábitos</div><div id="list-habitos"></div></div>
+  <div class="card"><div class="card-title">Manhã</div><div id="list-manha"></div></div>
+  <div class="card"><div class="card-title">Tarde</div><div id="list-tarde"></div></div>
+  <div class="card"><div class="card-title">Noite</div><div id="list-noite"></div></div>
+  <div class="card">
+    <div class="card-title">Adicionar tarefa</div>
+    <div class="irow"><input type="text" id="nova-txt" placeholder="Nova tarefa..."/></div>
+    <div class="irow">
+      <select id="nova-bloco">
+        <option value="top3">Top 3</option>
+        <option value="habitos">Hábitos</option>
+        <option value="manha">Manhã</option>
+        <option value="tarde">Tarde</option>
+        <option value="noite">Noite</option>
+      </select>
+      <button class="btn" onclick="addTarefa()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- GASTOS -->
+<div id="page-gastos" class="page">
+  <div class="loading-bar" id="loading-gastos"></div>
+  <div id="last-sync-gastos" class="last-sync"></div>
+  <div class="mg3">
+    <div class="metric"><div class="metric-label">Despesas</div><div class="metric-value neg" id="m-desp" style="font-size:16px">—</div></div>
+    <div class="metric"><div class="metric-label">Receitas</div><div class="metric-value pos" id="m-rec" style="font-size:16px">—</div></div>
+    <div class="metric"><div class="metric-label">Saldo</div><div class="metric-value" id="m-saldo" style="font-size:16px">—</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Adicionar</div>
+    <div class="irow">
+      <input type="text" id="g-desc" placeholder="Descrição"/>
+      <input type="number" id="g-val" placeholder="R$" style="max-width:85px"/>
+    </div>
+    <div class="irow">
+      <select id="g-cat">
+        <option value="Transporte">Transporte</option>
+        <option value="Alimentação">Alimentação</option>
+        <option value="Ganhos">Ganhos</option>
+        <option value="Lazer">Lazer</option>
+        <option value="Educação">Educação</option>
+        <option value="Outros">Outros</option>
+      </select>
+      <select id="g-tipo">
+        <option value="Despesa">Despesa</option>
+        <option value="Receita">Receita</option>
+      </select>
+    </div>
+    <button class="btn btn-full" onclick="addGasto()">+ Adicionar gasto</button>
+  </div>
+  <div class="card"><div class="card-title">Histórico</div><div id="lista-gastos"></div></div>
+</div>
+
+<!-- METAS -->
+<div id="page-metas" class="page">
+  <div class="loading-bar" id="loading-metas"></div>
+  <div id="last-sync-metas" class="last-sync"></div>
+  <div class="card"><div class="card-title">Objetivos semanais</div><div id="lista-metas-sem"></div></div>
+  <div class="card"><div class="card-title">Meta de longo prazo</div><div id="lista-metas-longo"></div></div>
+  <div class="card">
+    <div class="card-title">Adicionar meta</div>
+    <div class="irow"><input type="text" id="m-novo-desc" placeholder="Descrição da meta"/></div>
+    <div class="irow">
+      <select id="m-novo-area">
+        <option value="Estudo">Estudo</option>
+        <option value="Trabalho">Trabalho</option>
+        <option value="Saúde/Esporte">Saúde/Esporte</option>
+        <option value="Pessoal">Pessoal</option>
+      </select>
+      <input type="number" id="m-novo-prog" placeholder="% inicial" min="0" max="100" style="max-width:90px"/>
+    </div>
+    <button class="btn btn-full" onclick="addMeta()">+ Adicionar meta</button>
+  </div>
+</div>
+
+<!-- RESUMO -->
+<div id="page-resumo" class="page">
+  <div id="resumo-content"></div>
+</div>
+
+<script>
+// IDs do Notion
+const DB_GASTOS = '3337b3aed07580ce9c94fefb20247818';
+const DB_METAS  = 'd54bfe30016540b2a61fd4c34daef8d5';
+
+// Dados locais (fallback enquanto não sincroniza)
+const blocos={
+  top3:[{t:'Trabalho',d:false},{t:'Estudo',d:false},{t:'Esporte',d:false}],
+  habitos:[{t:'Banho gelado (manhã)',d:false},{t:'Leitura',d:false},{t:'Dormir cedo',d:false},{t:'Esporte',d:false},{t:'Oração',d:false}],
+  manha:[{t:'05:20 — Acordar',d:false},{t:'Café',d:false},{t:'Escola',d:false},{t:'Banho gelado',d:false},{t:'Cardio',d:false},{t:'Leitura do Jornal',d:false},{t:'Inscrição Olimpíada de Inglês + App de estudos',d:false}],
+  tarde:[{t:'Curso Novo Mercado',d:false},{t:'Estudar escola (study schedule)',d:false},{t:'Aula à tarde',d:false},{t:'Separar gastos em metas por porcentagem',d:false}],
+  noite:[{t:'Leitura',d:false},{t:'Novo Mercado (caso não feito)',d:false},{t:'Deitar cedo',d:false},{t:'Conferir e atualizar planejamentos',d:false},{t:'Academia',d:false}]
+};
+let gastos=[
+  {id:1,desc:'Uber',cat:'Transporte',tipo:'Despesa',val:35.73,data:'10/04',status:'Pago'},
+  {id:2,desc:'Mesada',cat:'Ganhos',tipo:'Receita',val:1000.00,data:'10/04',status:'Pago'},
+  {id:3,desc:'Água',cat:'Alimentação',tipo:'Despesa',val:3.00,data:'10/04',status:'Pago'},
+  {id:4,desc:'Uber',cat:'Transporte',tipo:'Despesa',val:28.34,data:'11/04',status:'Pago'},
+  {id:5,desc:'Pix',cat:'Ganhos',tipo:'Receita',val:9.50,data:'11/04',status:'Pago'},
+  {id:6,desc:'Uber',cat:'Transporte',tipo:'Despesa',val:12.00,data:'12/04',status:'Pago'},
+  {id:7,desc:'Esfiha',cat:'Alimentação',tipo:'Despesa',val:15.00,data:'12/04',status:'Pago'},
+  {id:8,desc:'Uber',cat:'Transporte',tipo:'Despesa',val:36.45,data:'15/04',status:'Pago'},
+  {id:9,desc:'Bombom',cat:'Alimentação',tipo:'Despesa',val:10.00,data:'14/04',status:'Pago'},
+  {id:10,desc:'App de estudo - SUPERPRO',cat:'Educação',tipo:'Despesa',val:90.00,data:'16/04',status:'Pago'},
+  {id:11,desc:'Livro',cat:'Educação',tipo:'Despesa',val:47.00,data:'16/04',status:'Pago'},
+  {id:12,desc:'Espetinho',cat:'Alimentação',tipo:'Despesa',val:21.00,data:'16/04',status:'Pago'},
+  {id:13,desc:'Dança Festa junina',cat:'Lazer',tipo:'Despesa',val:10.00,data:'17/04',status:'Pendente'}
+];
+let metasSem=[
+  {id:1,desc:'Bater a meta de estudos todos os dias',area:'Estudo',prog:0},
+  {id:2,desc:'Academia 4x',area:'Saúde/Esporte',prog:0},
+  {id:3,desc:'Ler todos os dias',area:'Estudo',prog:0},
+  {id:4,desc:'Finalizar um ou dois cursos da lista pendente',area:'Trabalho',prog:0},
+  {id:5,desc:'Avanço significativo na FORTALEZA',area:'Trabalho',prog:0}
+];
+let metasLongo=[{id:100,desc:'Vestibular — passar na UEM (ADM)',area:'Estudo',prog:20,prazo:'mar → jul 2026'}];
+
+// HELPERS
+const tagMap={'Estudo':'t-estudo','Trabalho':'t-trabalho','Saúde/Esporte':'t-saude','Pessoal':'t-pessoal','Transporte':'t-transporte','Alimentação':'t-alimentacao','Ganhos':'t-ganhos','Lazer':'t-lazer','Educação':'t-educacao','Outros':'t-outros'};
+const progCol={'Estudo':'#7F77DD','Trabalho':'#378ADD','Saúde/Esporte':'#1D9E75','Pessoal':'#D4537E'};
+function tag(l){return`<span class="tag ${tagMap[l]||'t-outros'}">${l}</span>`;}
+function fmt(v){return'R$ '+v.toFixed(2);}
+
+// NOTION SYNC
+async function notionQuery(dbId){
+  const res = await fetch(`/api/notion/databases/${dbId}/query`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({page_size: 100})
+  });
+  return res.json();
+}
+
+function parseGastos(data){
+  return data.results.map((p,i) => {
+    const props = p.properties;
+    const desc = props['Descrição']?.title?.[0]?.plain_text || 'Sem título';
+    const cat = props['Categoria']?.select?.name || 'Outros';
+    const tipo = props['Tipo']?.select?.name || 'Despesa';
+    const status = props['Status']?.status?.name || 'Pago';
+    const valRaw = props['Valor']?.number || 0;
+    const dataRaw = props['Data']?.date?.start || '';
+    const dateFmt = dataRaw ? new Date(dataRaw).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) : '—';
+    return {id: p.id, desc, cat, tipo, val: valRaw, data: dateFmt, status};
+  });
+}
+
+function parseMetas(data){
+  return data.results.map(p => {
+    const props = p.properties;
+    const desc = props['Objetivo']?.title?.[0]?.plain_text || 'Sem título';
+    const area = props['Área']?.select?.name || 'Estudo';
+    const bateu = props['Bati a meta?']?.checkbox || false;
+    return {id: p.id, desc, area, prog: bateu ? 100 : 0};
+  });
+}
+
+async function syncNotion(){
+  const dot = document.getElementById('sync-dot');
+  const txt = document.getElementById('sync-txt');
+  dot.className = 'sync-dot loading';
+  txt.textContent = 'Sincronizando...';
+
+  try {
+    // Buscar gastos
+    document.getElementById('loading-gastos').classList.add('active');
+    const gastosData = await notionQuery(DB_GASTOS);
+    if(gastosData.results){
+      gastos = parseGastos(gastosData);
+      renderGastos();
+      const now = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      document.getElementById('last-sync-gastos').textContent = `Sincronizado às ${now}`;
+    }
+    document.getElementById('loading-gastos').classList.remove('active');
+
+    // Buscar metas
+    document.getElementById('loading-metas').classList.add('active');
+    const metasData = await notionQuery(DB_METAS);
+    if(metasData.results){
+      metasSem = parseMetas(metasData);
+      renderMetas();
+      const now2 = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      document.getElementById('last-sync-metas').textContent = `Sincronizado às ${now2}`;
+    }
+    document.getElementById('loading-metas').classList.remove('active');
+
+    dot.className = 'sync-dot ok';
+    txt.textContent = 'Sincronizado';
+    setTimeout(()=>{ txt.textContent='Sincronizar'; },3000);
+
+  } catch(err) {
+    dot.className = 'sync-dot error';
+    txt.textContent = 'Erro — tente novamente';
+    setTimeout(()=>{ dot.className='sync-dot'; txt.textContent='Sincronizar'; },4000);
+    document.getElementById('loading-gastos').classList.remove('active');
+    document.getElementById('loading-metas').classList.remove('active');
+  }
+}
+
+// HOJE
+function renderBlocos(){
+  ['top3','habitos','manha','tarde','noite'].forEach(k=>{
+    const el=document.getElementById('list-'+k);
+    if(!blocos[k].length){el.innerHTML='<div class="empty">Vazio</div>';return;}
+    el.innerHTML=blocos[k].map((t,i)=>`
+      <div class="task-row">
+        <div class="cb ${t.d?'done':''}" onclick="toggleT('${k}',${i})">
+          ${t.d?'<svg width="10" height="10" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>':''}
+        </div>
+        <span class="task-txt ${t.d?'done':''}">${t.t}</span>
+        <span class="del-btn" onclick="delT('${k}',${i})">×</span>
+      </div>`).join('');
+  });
+  const all=Object.values(blocos).flat();
+  document.getElementById('m-tarefas').textContent=all.filter(t=>t.d).length+'/'+all.length;
+  document.getElementById('m-habitos').textContent=blocos.habitos.filter(h=>h.d).length+'/'+blocos.habitos.length;
+}
+function toggleT(k,i){blocos[k][i].d=!blocos[k][i].d;renderBlocos();}
+function delT(k,i){blocos[k].splice(i,1);renderBlocos();}
+function addTarefa(){
+  const txt=document.getElementById('nova-txt').value.trim();
+  const k=document.getElementById('nova-bloco').value;
+  if(!txt)return;
+  blocos[k].push({t:txt,d:false});
+  document.getElementById('nova-txt').value='';
+  renderBlocos();
+}
+
+// GASTOS
+function addGasto(){
+  const desc=document.getElementById('g-desc').value.trim();
+  const val=parseFloat(document.getElementById('g-val').value);
+  const cat=document.getElementById('g-cat').value;
+  const tipo=document.getElementById('g-tipo').value;
+  if(!desc||isNaN(val)||val<=0)return;
+  gastos.push({id:Date.now(),desc,cat,tipo,val,data:'hoje',status:'Pago'});
+  document.getElementById('g-desc').value='';
+  document.getElementById('g-val').value='';
+  renderGastos();
+}
+function delG(id){gastos=gastos.filter(g=>g.id!==id);renderGastos();}
+function renderGastos(){
+  const desp=gastos.filter(g=>g.tipo==='Despesa').reduce((a,g)=>a+g.val,0);
+  const rec=gastos.filter(g=>g.tipo==='Receita').reduce((a,g)=>a+g.val,0);
+  const saldo=rec-desp;
+  document.getElementById('m-desp').textContent=fmt(desp);
+  document.getElementById('m-rec').textContent=fmt(rec);
+  const sEl=document.getElementById('m-saldo');
+  sEl.textContent=fmt(Math.abs(saldo));
+  sEl.style.color=saldo>=0?'var(--green-light)':'var(--red-light)';
+  document.getElementById('lista-gastos').innerHTML=gastos.map(g=>`
+    <div class="gasto-row">
+      <div style="flex:1">
+        <div class="gasto-desc">${g.desc} <span style="font-size:11px;color:var(--hint)">${g.data}</span></div>
+        <div>${tag(g.cat)}<span class="tag ${g.tipo==='Receita'?'t-receita':'t-despesa'}">${g.tipo}</span>${g.status==='Pendente'?'<span class="tag t-pendente">Pendente</span>':''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <span class="gasto-val ${g.tipo==='Receita'?'pos':'neg'}">${g.tipo==='Receita'?'+':'-'} ${fmt(g.val)}</span>
+        <span class="del-btn" onclick="delG(${g.id})">×</span>
+      </div>
+    </div>`).join('');
+}
+
+// METAS
+function updMS(id,v){const m=metasSem.find(m=>m.id===id);if(m){m.prog=+v;renderMetas();}}
+function updML(id,v){const m=metasLongo.find(m=>m.id===id);if(m){m.prog=+v;renderMetas();}}
+function addMeta(){
+  const desc=document.getElementById('m-novo-desc').value.trim();
+  const area=document.getElementById('m-novo-area').value;
+  const prog=Math.min(100,Math.max(0,parseInt(document.getElementById('m-novo-prog').value)||0));
+  if(!desc)return;
+  metasSem.push({id:Date.now(),desc,area,prog});
+  document.getElementById('m-novo-desc').value='';
+  document.getElementById('m-novo-prog').value='';
+  renderMetas();
+}
+function metaHTML(m,fn){
+  return`<div class="meta-item">
+    <div class="meta-header">
+      <div><div style="margin-bottom:5px">${tag(m.area)}</div><div class="meta-desc">${m.desc}${m.prazo?`<span style="font-size:11px;color:var(--hint);display:block;margin-top:2px">${m.prazo}</span>`:''}</div></div>
+      <span class="meta-pct">${m.prog}%</span>
+    </div>
+    <div class="prog-bg"><div class="prog-fill" style="width:${m.prog}%;background:${progCol[m.area]||'#7F77DD'}"></div></div>
+    <input type="range" min="0" max="100" value="${m.prog}" step="1" onchange="${fn}(${m.id},this.value)"/>
+  </div>`;
+}
+function renderMetas(){
+  document.getElementById('lista-metas-sem').innerHTML=metasSem.map(m=>metaHTML(m,'updMS')).join('');
+  document.getElementById('lista-metas-longo').innerHTML=metasLongo.map(m=>metaHTML(m,'updML')).join('');
+}
+
+// RESUMO
+function renderResumo(){
+  const desp=gastos.filter(g=>g.tipo==='Despesa').reduce((a,g)=>a+g.val,0);
+  const rec=gastos.filter(g=>g.tipo==='Receita').reduce((a,g)=>a+g.val,0);
+  const saldo=rec-desp;
+  const all=Object.values(blocos).flat();
+  const done=all.filter(t=>t.d).length;
+  const hd=blocos.habitos.filter(h=>h.d).length;
+  const pm=metasSem.length?Math.round(metasSem.reduce((a,m)=>a+m.prog,0)/metasSem.length):0;
+  const cats=['Transporte','Alimentação','Educação','Lazer','Outros'];
+  const colMap={'Transporte':'var(--blue-light)','Alimentação':'var(--amber-light)','Educação':'var(--purple-light)','Lazer':'var(--amber-light)','Outros':'var(--muted)'};
+  const distHTML=cats.map(cat=>{
+    const total=gastos.filter(g=>g.cat===cat&&g.tipo==='Despesa').reduce((a,g)=>a+g.val,0);
+    if(!total)return'';
+    const pct=desp>0?Math.round(total/desp*100):0;
+    return`<div class="dist-row">
+      <div class="dist-header"><span>${tag(cat)} ${cat}</span><span class="dist-val">${pct}% · ${fmt(total)}</span></div>
+      <div class="prog-bg"><div class="prog-fill" style="width:${pct}%;background:${colMap[cat]}"></div></div>
+    </div>`;
+  }).join('');
+  document.getElementById('resumo-content').innerHTML=`
+    <div class="mg2">
+      <div class="metric"><div class="metric-label">Saldo</div><div class="metric-value" style="font-size:18px;color:${saldo>=0?'var(--green-light)':'var(--red-light)'}">${fmt(Math.abs(saldo))}</div></div>
+      <div class="metric"><div class="metric-label">Tarefas</div><div class="metric-value" style="font-size:18px">${done}/${all.length}</div></div>
+    </div>
+    <div class="mg2">
+      <div class="metric"><div class="metric-label">Metas (média)</div><div class="metric-value" style="font-size:18px">${pm}%</div></div>
+      <div class="metric"><div class="metric-label">Hábitos</div><div class="metric-value" style="font-size:18px">${hd}/${blocos.habitos.length}</div></div>
+    </div>
+    <div class="card"><div class="card-title">Gastos por categoria</div>${distHTML||'<div class="empty">Sem despesas</div>'}</div>`;
+}
+
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='resumo')renderResumo();
+}
+
+const dias=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+const meses=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const now=new Date();
+document.getElementById('header-date').textContent=`${dias[now.getDay()]}, ${now.getDate()} de ${meses[now.getMonth()]} de ${now.getFullYear()}`;
+
+renderBlocos();renderGastos();renderMetas();
+</script>
+</body>
+</html>
