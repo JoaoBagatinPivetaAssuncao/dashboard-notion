@@ -1,4 +1,4 @@
-javascriptexports.handler = async (event) => {
+exports.handler = async (event) => {
   const token = process.env.NOTION_TOKEN;
   const path = event.path.replace('/.netlify/functions/notion', '').replace('/api/notion', '');
   const notionUrl = `https://api.notion.com/v1${path}`;
