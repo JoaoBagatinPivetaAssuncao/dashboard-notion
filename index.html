@@ -243,8 +243,9 @@ if(sessionStorage.getItem('auth')==='1'){
 }
 
 // IDs do Notion
-const DB_GASTOS = '3337b3aed07580ce9c94fefb20247818';
-const DB_METAS  = 'd54bfe30016540b2a61fd4c34daef8d5';
+const DB_GASTOS  = '3337b3aed07580ce9c94fefb20247818';
+const DB_METAS   = 'd54bfe30016540b2a61fd4c34daef8d5';
+const PAGE_ROTINA = '32b7b3aed07580089c16ef2beebbca52';
 
 // Dados locais (fallback enquanto não sincroniza)
 const blocos={
@@ -285,6 +286,37 @@ function tag(l){return`<span class="tag ${tagMap[l]||'t-outros'}">${l}</span>`;}
 function fmt(v){return'R$ '+v.toFixed(2);}
 
 // NOTION SYNC
+// Mapa de títulos do Notion → chaves dos blocos
+const TITULO_BLOCO = {
+  'Top 3 do dia': 'top3',
+  'Hábitos (marcar quando fizer)': 'habitos',
+  'Manhã (início forte)': 'manha',
+  'Tarde (entrega do dia)': 'tarde',
+  'Noite (fechamento)': 'noite',
+  'Captura rápida (se surgir algo)': 'captura'
+};
+
+async function notionBlocks(pageId){
+  const res = await fetch(`/api/notion/blocks/${pageId}/children?page_size=100`);
+  return res.json();
+}
+
+function parseRotina(data){
+  const novo = {top3:[],habitos:[],manha:[],tarde:[],noite:[],captura:[]};
+  let blocoAtual = null;
+  for(const block of data.results){
+    if(block.type === 'heading_2' || block.type === 'heading_3'){
+      const titulo = block[block.type]?.rich_text?.[0]?.plain_text || '';
+      blocoAtual = TITULO_BLOCO[titulo] || null;
+    } else if(block.type === 'to_do' && blocoAtual){
+      const txt = block.to_do?.rich_text?.[0]?.plain_text || '';
+      const done = block.to_do?.checked || false;
+      if(txt) novo[blocoAtual].push({t:txt, d:done, notionId: block.id});
+    }
+  }
+  return novo;
+}
+
 async function notionQuery(dbId){
   const res = await fetch(`/api/notion/databases/${dbId}/query`, {
     method: 'POST',
@@ -325,6 +357,16 @@ async function syncNotion(){
   txt.textContent = 'Sincronizando...';
 
   try {
+    // Buscar rotina
+    document.getElementById('loading-hoje').classList.add('active');
+    const rotinaData = await notionBlocks(PAGE_ROTINA);
+    if(rotinaData.results){
+      const novoBlocos = parseRotina(rotinaData);
+      Object.keys(novoBlocos).forEach(k=>{ if(novoBlocos[k].length) blocos[k]=novoBlocos[k]; });
+      renderBlocos();
+    }
+    document.getElementById('loading-hoje').classList.remove('active');
+
     // Buscar gastos
     document.getElementById('loading-gastos').classList.add('active');
     const gastosData = await notionQuery(DB_GASTOS);
@@ -355,6 +397,7 @@ async function syncNotion(){
     dot.className = 'sync-dot error';
     txt.textContent = 'Erro — tente novamente';
     setTimeout(()=>{ dot.className='sync-dot'; txt.textContent='Sincronizar'; },4000);
+    document.getElementById('loading-hoje').classList.remove('active');
     document.getElementById('loading-gastos').classList.remove('active');
     document.getElementById('loading-metas').classList.remove('active');
   }
